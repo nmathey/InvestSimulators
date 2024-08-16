@@ -2,6 +2,8 @@
 
 Ce projet est un simulateur simpliste et interactif de plan d'investissements personnel, conçu pour aider les utilisateurs à visualiser et planifier leurs stratégies d'investissement à long terme.
 
+Idée suite à l'utilisation de https://www.simulator.othmanehamzaoui.dev
+
 ## Fonctionnalités
 
 - Création et gestion de multiples projets d'investissement
