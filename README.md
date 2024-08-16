@@ -1,6 +1,6 @@
 # Simulateur de Plan d'Investissements Personnel
 
-Ce projet est un simulateur interactif de plan d'investissements personnel, conçu pour aider les utilisateurs à visualiser et planifier leurs stratégies d'investissement à long terme.
+Ce projet est un simulateur simpliste et interactif de plan d'investissements personnel, conçu pour aider les utilisateurs à visualiser et planifier leurs stratégies d'investissement à long terme.
 
 ## Fonctionnalités
 
