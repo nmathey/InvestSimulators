@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur de plan d'investissements</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            font-family: var(--font-text, Arial, sans-serif);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--background-primary);
+            color: var(--text-normal);
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], input[type="range"] {
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #2a2a2a;
+            color: #ffffff;
+        }
+        .project-container {
+            margin-bottom: 20px;
+        }
+        .project {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            padding: 10px;
+            background-color: #e9e9e9;
+        }
+        .project-name {
+            font-weight: bold;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .project-controls {
+            display: flex;
+            align-items: center;
+        }
+        .drag-handle {
+            cursor: move;
+            padding: 5px;
+            margin-right: 5px;
+            user-select: none;
+        }
+        .dragging {
+            opacity: 0.5;
+            border: 2px dashed #000;
+        }
+        .project-content {
+            display: none;
+            padding-top: 10px;
+        }
+        .project-content.open {
+            display: block;
+        }
+        button {
+            margin-right: 10px;
+        }
+        #chartContainer {
+            margin-top: 20px;
+            height: 400px;
+        }
+        .accordion {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            transition: 0.4s;
+          }
+          
+          .active, .accordion:hover {
+            background-color: #ccc;
+          }
+          
+          .accordion:after {
+            content: '\002B';
+            color: #777;
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+          }
+          
+          .active:after {
+            content: "\2212";
+          }
+          
+          .panel {
+            padding: 0 18px;
+            background-color: white;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+          }
+
+    </style>
+</head>
+<body>
+    <h1>Simulateur de plan d'investissements personnel</h1>
+    
+    <div class="input-group">
+        <label for="windows">Fenêtre de la simulation (en années depuis aujourd'hui):</label>
+        <input type="range" id="windows" min="10" max="100" value="50">
+        <span id="windowsValue">50</span>
+    </div>
+
+    <div id="projectContainer" class="project-container">
+        <!-- Les projets seront ajoutés ici dynamiquement -->
+    </div>
+
+    <button onclick="addProject()">Ajouter un projet</button>
+    <button onclick="calculateInvestment()">Simuler les investissements dans le temps</button>
+    
+    <div id="chartContainer">
+        <canvas id="investmentChart"></canvas>
+    </div>
+
+    <script>
+        let projectCount = 0;
+        let chart;
+        const thisYear = new Date().getFullYear();
+        const thisMonth = new Date().getMonth();
+        console.log(thisMonth);
+        const colors = [
+            'rgb(255, 99, 132)', 'rgb(75, 192, 192)', 'rgb(255, 205, 86)',
+            'rgb(201, 203, 207)', 'rgb(54, 162, 235)', 'rgb(153, 102, 255)'
+        ];
+
+        function addProject() {
+            projectCount++;
+            const projectDiv = document.createElement('div');
+            projectDiv.className = 'project';
+            projectDiv.dataset.projectId = projectCount;
+            projectDiv.innerHTML = `
+                <div class="project-header" draggable="true">
+                    <div class="project-controls">
+                        <span class="drag-handle">&#9776;</span>
+                        <input type="text" class="project-name" value="Project ${projectCount}" onchange="updateProjectName(${projectCount}, this.value)">
+                    </div>
+                    <span onclick="toggleProject(${projectCount})">▼</span>
+                </div>
+                <div id="projectContent${projectCount}" class="project-content">
+                <div class="input-group">
+                    <label for="principal_p${projectCount}">Solde à date du l'enveloppe du projet ${projectCount}:</label>
+                    <input type="number" id="principalValue_p${projectCount}" value="40000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="monthlyInvestment_p${projectCount}">Budget mensuel d'investissement le projet ${projectCount}:</label>
+                    <input type="number" id="monthlyInvestment_p${projectCount}" value="500">
+                </div>
+                
+                <div class="input-group">
+                    <label for="investYears_p${projectCount}">Durée d'investissement pour le projet ${projectCount} (en années à partir d'aujourd'hui):</label>
+                    <input type="range" id="investYears_p${projectCount}" min="1" max="70" value="23">
+                    <span id="investYearsValue_p${projectCount}">23</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="growthRate_p${projectCount}">Taux de croissance moyen estimé (%) de l'enveloppe pour le projet ${projectCount}:</label>
+                    <input type="range" id="growthRate_p${projectCount}" min="1" max="20" step="0.1" value="5">
+                    <span id="growthRateValue_p${projectCount}">5</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="entryFees_p${projectCount}">Frais d'entrées moyen (%) de l'enveloppe pour le projet ${projectCount}:</label>
+                    <input type="range" id="entryFees_p${projectCount}" min="0" max="5" step="0.1" value="0">
+                    <span id="entryFeesValue_p${projectCount}">0</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="managementFees_p${projectCount}">Frais de gestion moyen (%) de l'enveloppe pour le projet ${projectCount}:</label>
+                    <input type="range" id="managementFees_p${projectCount}" min="0" max="5" step="0.1" value="0.8">
+                    <span id="managementFeesValue_p${projectCount}">0.8</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="withdrawalYear_p${projectCount}">Quand comptes-tu commencer à retirer les fonds de l'enveloppe projet ${projectCount} (en années depuis aujourd'hui):</label>
+                    <input type="range" id="withdrawalYear_p${projectCount}" min="1" max="70" value="23">
+                    <span id="withdrawalYearValue_p${projectCount}">23</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="withdrawalAmount_p${projectCount}">Montant mensuel de retrait de l'enveloppe du projet ${projectCount} (si -1 alors retrait total en une fois)</label>
+                    <input type="number" id="withdrawalAmount_p${projectCount}" value="1500">
+                </div>
+                    <button onclick="removeProject(${projectCount})">Supprimer ce projet</button>
+                </div>
+            `;
+            document.getElementById('projectContainer').appendChild(projectDiv);
+            updateSliderValues(projectCount);
+            calculateInvestment();
+            addDragListeners(projectDiv);
+        }
+        
+        function updateProjectName(projectId, newName) {
+            // Mettre à jour le nom du projet dans les données et recalculer l'investissement
+            calculateInvestment();
+        }
+
+        function addDragListeners(projectDiv) {
+            const header = projectDiv.querySelector('.project-header');
+            header.addEventListener('dragstart', dragStart);
+            header.addEventListener('dragend', dragEnd);
+            projectDiv.addEventListener('dragover', dragOver);
+            projectDiv.addEventListener('drop', drop);
+        }
+
+        let draggedElement = null;
+
+        function dragStart(e) {
+            draggedElement = this.closest('.project');
+            setTimeout(() => draggedElement.classList.add('dragging'), 0);
+        }
+
+        function dragEnd(e) {
+            this.closest('.project').classList.remove('dragging');
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+            const project = this.closest('.project');
+            if (project !== draggedElement) {
+                const rect = project.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (e.clientY < midY) {
+                    project.style.borderTop = '2px solid blue';
+                    project.style.borderBottom = '';
+                } else {
+                    project.style.borderBottom = '2px solid blue';
+                    project.style.borderTop = '';
+                }
+            }
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const project = this.closest('.project');
+            if (project !== draggedElement) {
+                const rect = project.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const container = document.getElementById('projectContainer');
+                if (e.clientY < midY) {
+                    container.insertBefore(draggedElement, project);
+                } else {
+                    container.insertBefore(draggedElement, project.nextSibling);
+                }
+            }
+            project.style.borderTop = '';
+            project.style.borderBottom = '';
+            calculateInvestment();
+        }
+
+        function toggleProject(projectId) {
+            const content = document.getElementById(`projectContent${projectId}`);
+            content.classList.toggle('open');
+            const arrow = content.previousElementSibling.querySelector('span');
+            arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
+        }
+        
+        function removeProject(projectId) {
+            const projectElement = document.querySelector(`.project[data-project-id="${projectId}"]`);
+            if (projectElement) {
+                projectElement.remove();
+                calculateInvestment();
+            }
+        }
+
+        function updateSliderValues(projectCount) {
+            const sliders = ['investYears', 'growthRate', 'entryFees', 'managementFees', 'withdrawalYear'];
+            for (let p = projectCount; p > 0; p --){
+                sliders.forEach(slider => {
+                    updateSliderValue(`${slider}_p${p}`, `${slider}Value_p${p}`);
+                });
+            }
+        }
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueSpan = document.getElementById(valueId);
+            if (slider && valueSpan) {
+                valueSpan.textContent = slider.value;
+                slider.oninput = function() {
+                    valueSpan.textContent = this.value;
+                    calculateInvestment();
+                }
+            }
+        }
+
+        updateSliderValue('windows', 'windowsValue');
+
+        function calculateInvestment() {
+            const windows = Number(document.getElementById('windows').value);
+            const projects = document.querySelectorAll('.project');
+            const data = {
+                labels: [],
+                datasets: []
+            };
+
+            for (let year = 0; year <= windows; year++) {
+                data.labels.push(thisYear + year);
+            }
+
+            let totalDataset = {
+                label: 'Total',
+                data: new Array(windows + 1).fill(0),
+                borderColor: 'rgb(0, 255, 0)',
+                tension: 0.1
+            };
+
+            let projectsData = [];
+            let availableMonthlyInvestment = 0;
+
+            // Initialisation des données des projets
+            projects.forEach((project, index) => {
+                const projectId = project.dataset.projectId;
+                const projectName = project.querySelector('.project-name').value;
+                projectsData.push({
+                    id: projectId,
+                    name: projectName,
+                    principal: Number(document.getElementById(`principalValue_p${projectId}`).value),
+                    monthlyInvestment: Number(document.getElementById(`monthlyInvestment_p${projectId}`).value),
+                    investYears: Number(document.getElementById(`investYears_p${projectId}`).value),
+                    growthRate: Number(document.getElementById(`growthRate_p${projectId}`).value) / 100,
+                    entryFees: Number(document.getElementById(`entryFees_p${projectId}`).value) / 100,
+                    managementFees: Number(document.getElementById(`managementFees_p${projectId}`).value) / 100,
+                    withdrawalYear: Number(document.getElementById(`withdrawalYear_p${projectId}`).value),
+                    withdrawalAmount: Number(document.getElementById(`withdrawalAmount_p${projectId}`).value),
+                    data: [Number(document.getElementById(`principalValue_p${projectId}`).value)],
+                    color: colors[index % colors.length]
+                });
+            });
+
+            // Calcul année par année
+            for (let year = 1; year <= windows; year++) {
+                projectsData.forEach((project, index) => {
+                    let projectValue = project.data[year - 1];
+                    
+                    if (year <= project.investYears) {
+                        projectValue = (projectValue + (project.monthlyInvestment + availableMonthlyInvestment) * 12 * (1 - project.entryFees)) * (1 + project.growthRate - project.managementFees);
+                        availableMonthlyInvestment = 0;
+                    } else if (year > project.withdrawalYear) {
+                        if (project.withdrawalAmount === -1) {
+                            availableMonthlyInvestment += projectValue / 12;
+                            projectValue = 0;
+                        } else {
+                            projectValue = (projectValue - project.withdrawalAmount * 12) * (1 + project.growthRate - project.managementFees);
+                        }
+                    } else {
+                        projectValue *= (1 + project.growthRate - project.managementFees);
+                    }
+
+                    project.data.push(Math.round(projectValue));
+                    totalDataset.data[year] += Math.round(projectValue);
+
+                    // Transférer le budget mensuel si la période d'investissement est terminée
+                    if (year === project.investYears) {
+                        availableMonthlyInvestment += project.monthlyInvestment;
+                        project.monthlyInvestment = 0;
+                    }
+                });
+            }
+
+            // Création des datasets pour le graphique
+            projectsData.forEach(project => {
+                data.datasets.push({
+                    label: project.name,
+                    data: project.data,
+                    borderColor: project.color,
+                    tension: 0.1
+                });
+            });
+
+            data.datasets.push(totalDataset);
+
+        if (chart) {
+            chart.destroy();
+        }
+
+        const ctx = document.getElementById('investmentChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: function(value) {
+                                return thisMonth+1 +'-'+ this.getLabelForValue(value);
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            addProject();
+            calculateInvestment();
+        });
+    </script>
+</body>
+</html>
