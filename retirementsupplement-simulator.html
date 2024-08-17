@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur d'épargne pour complément retraite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #resultats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculateur d'épargne pour complément retraite</h1>
+        <center><code><i>Sources disponibles sur <a href='https://github.com/nmathey/InvestSimulators'>Github</a></a></i></code></center>
+        <br/>
+        <br/>
+        
+        <form id="simulateurForm">
+            <div class="form-group">
+                <label for="inflationAnnuelle">Inflation annuelle moyenne estimée (%)</label>
+                <input type="number" id="inflationAnnuelle" value="2" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="ageActuel">Mon âge actuel</label>
+                <input type="number" id="ageActuel" value="43" required>
+            </div>
+            <div class="form-group">
+                <label for="revenusActuels">Revenus mensuels à date</label>
+                <input type="number" id="revenusActuels" value="4000" required>
+            </div>
+            <div class="form-group">
+                <label for="depensesActuelles">Total dépenses à date hors remboursement emprunt immo et épargnes</label>
+                <input type="number" id="depensesActuelles" value="1800" required>
+            </div>
+            <div class="form-group">
+                <label for="ageRetraite">Age de départ à la retraite</label>
+                <input type="number" id="ageRetraite" value="65" required>
+            </div>
+            <div class="form-group">
+                <label for="esperanceVie">Age espérance de vie estimée</label>
+                <input type="number" id="esperanceVie" value="90" required>
+            </div>
+            <div class="form-group">
+                <label for="ratioRemplacementRetraite">Ratio estimé du remplacement de mes revenus par mon système de retraite (%)</label>
+                <input type="number" id="ratioRemplacementRetraite" value="50" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="empruntsEnCoursRetraite">Si à la retraite j'ai encore des emprunts en cours, qu'elles seraient les mensualités ?</label>
+                <input type="number" id="empruntsEnCoursRetraite" value="0" required>
+            </div>
+            <div class="form-group">
+                <label for="augmentationAnnuelleRevenus">Augmentation annuelle moyenne des revenus (%)</label>
+                <input type="number" id="augmentationAnnuelleRevenus" value="1" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="epargneDejaConstituee">Épargne déjà constituée pour sur plan retraite à ce jour</label>
+                <input type="number" id="epargneDejaConstituee" value="25000" required>
+            </div>
+            <div class="form-group">
+                <label for="tauxRendementInvestissements">Taux estimé des rendements sur les investissements d'épargnes retraite (%)</label>
+                <input type="number" id="tauxRendementInvestissements" value="5" step="0.1" required>
+            </div>
+        </form>
+        <div id="resultats"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('simulateurForm');
+            const resultatDiv = document.getElementById('resultats');
+
+            form.addEventListener('input', calculerResultats);
+
+            function calculateMonthlyInvestment(targetAmount, currentAmount, growthRate, years) {
+                let monthlyGrowthRate = Math.pow(1 + growthRate, 1/12) - 1;
+                let totalMonths = years * 12;
+                let targetAmountAfterGrowth = targetAmount / Math.pow(1 + growthRate, years);
+                let monthlyInvestment = (targetAmountAfterGrowth - currentAmount) * monthlyGrowthRate / (1 - Math.pow(1 + monthlyGrowthRate, -totalMonths));
+                return monthlyInvestment;
+              }
+
+            function formatNumberWithSpaces(number) {
+                let numStr = number.toFixed(0).toString();
+                return numStr = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            }
+
+            function calculerResultats() {
+                const inputs = {
+                    inflationAnnuelle: parseFloat(document.getElementById('inflationAnnuelle').value) / 100,
+                    ageActuel: parseInt(document.getElementById('ageActuel').value),
+                    revenusActuels: parseFloat(document.getElementById('revenusActuels').value),
+                    depensesActuelles: parseFloat(document.getElementById('depensesActuelles').value),
+                    ageRetraite: parseInt(document.getElementById('ageRetraite').value),
+                    esperanceVie: parseInt(document.getElementById('esperanceVie').value),
+                    ratioRemplacementRetraite: parseFloat(document.getElementById('ratioRemplacementRetraite').value) / 100,
+                    empruntsEnCoursRetraite: parseFloat(document.getElementById('empruntsEnCoursRetraite').value),
+                    augmentationAnnuelleRevenus: parseFloat(document.getElementById('augmentationAnnuelleRevenus').value) / 100,
+                    epargneDejaConstituee: parseFloat(document.getElementById('epargneDejaConstituee').value),
+                    tauxRendementInvestissements: parseFloat(document.getElementById('tauxRendementInvestissements').value) / 100
+                };
+
+                const anneesJusquaRetraite = inputs.ageRetraite - inputs.ageActuel;
+                const revenusProfessionnelsRetraite = inputs.revenusActuels * Math.pow(1 + inputs.augmentationAnnuelleRevenus, anneesJusquaRetraite);
+                const revenusMensuelsSystemeRetraite = revenusProfessionnelsRetraite * inputs.ratioRemplacementRetraite;
+                const depensesMensuellesRetraite = inputs.depensesActuelles * Math.pow(1 + inputs.inflationAnnuelle, anneesJusquaRetraite)*1.05;
+                const resteAFinancerParMois = depensesMensuellesRetraite - revenusMensuelsSystemeRetraite;
+                const anneesRetraite = inputs.esperanceVie - inputs.ageRetraite;
+                const totalEpargneRetraiteAConstituer = resteAFinancerParMois * 12 * anneesRetraite * Math.pow(1 + inputs.inflationAnnuelle, anneesRetraite);
+
+                const mensualiteAEpargner = calculateMonthlyInvestment(totalEpargneRetraiteAConstituer, inputs.epargneDejaConstituee, inputs.tauxRendementInvestissements, anneesJusquaRetraite); 
+
+                resultatDiv.innerHTML = `
+                    <h2>Résultats</h2>
+                    <p><strong>Estimation des revenus professionnels à la veille de la retraite:</strong> ${formatNumberWithSpaces(revenusProfessionnelsRetraite)}</p>
+                    <p><strong>Estimation des revenus de mon système de retraite:</strong> ${formatNumberWithSpaces(revenusMensuelsSystemeRetraite)}</p>
+                    <p><strong>Estimation dépenses mensuelles à la retraite:</strong> ${formatNumberWithSpaces(depensesMensuellesRetraite)}</p>
+                    <p><strong>Reste à financer par mois en complément à l'indemnité retraite:</strong> ${formatNumberWithSpaces(resteAFinancerParMois)}</p>
+                    <p><strong>Total épargne retraite à constituer:</strong> ${formatNumberWithSpaces(totalEpargneRetraiteAConstituer)}</p>
+                    <p><strong>Mensualité minimum à investir avant la retraite:</strong> ${formatNumberWithSpaces(mensualiteAEpargner)}</p>
+                `;
+            }
+            calculerResultats();
+        });
+    </script>
+</body>
+</html>
