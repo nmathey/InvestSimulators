@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outils pour stratégie d'investissement personnel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .simulators {
+            margin-bottom: 30px;
+        }
+        .simulators ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .simulators li {
+            margin-bottom: 10px;
+        }
+        .simulators a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .simulators a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .donation {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e6f3ff;
+            border-radius: 5px;
+        }
+        .eth-address {
+            font-family: monospace;
+            background-color: #eee;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Outils pour stratégie d'investissement personnel</h1>
+        
+        <div class="simulators">
+            <h2>Simulateurs et Calculateurs</h2>
+            <ul>
+                <li><a href="./retirementsupplement-simulator.html">Calculateur pour complément retraite</a></li>
+                <li><a href="./lifeinvestments-simulator-multiprojects.html">Simulateur de plan d'investissements personnel</a></li>
+                <li>Plus à venir...</li>
+            </ul>
+        </div>
+
+        <h2>Mes Enveloppes et Produits Financiers</h2>
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Rechercher dans le tableau...">
+        <table id="investmentTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Nom</th>
+                    <th onclick="sortTable(1)">Type</th>
+                    <th onclick="sortTable(2)">Lien</th>
+                    <th onclick="sortTable(3)">Objectifs</th>
+                    <th onclick="sortTable(4)">Produits Utilisés</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Les données du tableau seront insérées ici par JavaScript -->
+            </tbody>
+        </table>
+
+        <div class="donation" id="donation">
+            <h3>Me Soutenir</h3>
+            <p>Si vous souhaitez me remercier pour le travail partagé, vous pouvez utiliser les liens de parrainage ci-dessus ou faire un don de n'importe quel token ERC20 à l'adresse suivante :</p>
+            <p class="eth-address">0xEFf0d54e391C6097CdF24A3Fc450988Ebd9a91F7</p>
+            <p>Cette adresse est valide sur les réseaux Ethereum, Gnosis et Polygon.</p>
+        </div>
+    </div>
+
+    <script>
+        const tableData = [
+            {
+                name: "Linxea Avenir",
+                type: "AV",
+                link: "https://linxea.mention-me.com/m/ol/zg3mt-nicolas-mathey",
+                objectives: "Liberté financière 🎆, Matelas de sécurité 🆘",
+                products: "ETF, Fonds euro",
+                description: "Assurance-vie en ligne avec des frais réduits"
+            },
+            {
+                name: "Interactive Brokers",
+                type: "CTO",
+                link: "https://ibkr.com/referral/nicolas136",
+                objectives: "Liberté financière 🎆",
+                products: "Actions, ETF",
+                description: "Courtier international pour les investisseurs avancés avec énorment de choix de produits boursiers"
+            },
+            {
+                name: "Revolut Trading",
+                type: "Banque, CTO, Crypto",
+                link: "https://revolut.com/referral/nicolanuy",
+                objectives: "Liberté financière 🎆, Matelas de sécurité 🆘",
+                products: "Actions, ETF, Obligations",
+                description: "Neo banque avec des produits financiers facile d'accès directement depuis l'application"
+            },
+            {
+                name: "Livret A",
+                type: "Livret",
+                link: "",
+                objectives: "Matelas de sécurité 🆘",
+                products: "Livret A",
+                description: "Livret A standard"
+            },
+            {
+                name: "RealT - Immobilier",
+                type: "Immobilier",
+                link: "https://realt.co/ref/nmathey/",
+                objectives: "Liberté financière 🎆",
+                products: "Immo tokenisé",
+                description: "Investissement immobilier locatif fractionné à partir de 50$ avec haut rendement"
+            },
+            {
+                name: "NEO",
+                type: "Immobilier",
+                link: "https://www.novaxia.fr",
+                objectives: "Liberté financière 🎆",
+                products: "SCPI",
+                description: "SCPI diversifiée en ligne sans frais d'entrée spécialisée dans la réurbanisation"
+            },
+            {
+                name: "Epsilon360",
+                type: "AV",
+                link: "https://epsicap.fr",
+                objectives: "Liberté financière 🎆",
+                products: "SCPI",
+                description: "Première SCPI exclusivement dédiée à l’immobilier « small caps »"
+            },
+            {
+                name: "WeSave",
+                type: "AV",
+                link: "https://www.wesave.fr/onboarding?promo=NMFF24",
+                objectives: "Liberté financière 🎆",
+                products: "Actions, ETF, Obligations, Fonds euro",
+                description: "Pionier des AV robot advisor en ligne offrant une logique « multiprojets »"
+            },
+            {
+                name: "Mt Pellerin",
+                type: "Crypto",
+                link: "http://mtpelerin.com/fr/join?rfr=P9KPdkL6",
+                objectives: "Liberté financière 🎆",
+                products: "Crypto",
+                description: "Broker crypto à bas prix surtout en possédant des MPS (actions tokenisé de l'entreprise), permettant des frais 100% gratuits"
+            },
+            {
+                name: "Nalo",
+                type: "AV",
+                link: "https://nalo.fr/?idpa=EC863",
+                objectives: "Etudes enfants 👩‍🎓👨‍🎓",
+                products: "Actions, ETF, Obligations, Fonds euro",
+                description: "AV robot advisor en ligne avec une logique « multiprojets » qui s'autoarbitre à l'approche de l'objectif "
+            },
+            {
+                name: "Caption",
+                type: "Crowdfunding",
+                link: "https://app.caption.market/invite/NM-7877",
+                objectives: "Liberté financière 🎆",
+                products: "Start-Up, PME",
+                description: " "
+            },
+            {
+                name: "PEE",
+                type: "PEE",
+                link: " ",
+                objectives: "Matelas de sécurité 🆘",
+                products: "Fonds monétaires",
+                description: " "
+            },
+            {
+                name: "RealT - DEFI",
+                type: "Crypto",
+                link: "https://realt.co/ref/nmathey/",
+                objectives: "Liberté financière 🎆, Matelas de sécurité 🆘",
+                products: "Crypto",
+                description: "Pionner dans la tokenisation RWA et leur utilisation en collatéral pour la DEFI"
+            },
+            {
+                name: "Deblock",
+                type: "Banque, Crypto",
+                link: "https://dblk.me/a-ehq325",
+                objectives: "Liberté financière 🎆, Matelas de sécurité 🆘",
+                products: "Crypto",
+                description: "Neo banque 100% francaise, crypto et surtout XPF friendly!! ❤️"
+            },
+        ];
+
+        function populateTable() {
+            const tbody = document.querySelector("#investmentTable tbody");
+            tableData.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><div class="tooltip">${row.name}<span class="tooltiptext">${row.description}</span></div></td>
+                    <td>${row.type}</td>
+                    <td><a href="${row.link}" target="_blank">Lien</a></td>
+                    <td>${row.objectives}</td>
+                    <td>${row.products}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortTable(n) {
+            const table = document.getElementById("investmentTable");
+            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            switching = true;
+            dir = "asc";
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir == "asc") {
+                        if (x.innerText.toLowerCase() > y.innerText.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerText.toLowerCase() < y.innerText.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        function filterTable() {
+            const input = document.getElementById("searchInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("investmentTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                let visible = false;
+                const td = tr[i].getElementsByTagName("td");
+                for (let j = 0; j < td.length; j++) {
+                    const cell = td[j];
+                    if (cell) {
+                        const textValue = cell.textContent || cell.innerText;
+                        if (textValue.toLowerCase().indexOf(filter) > -1) {
+                            visible = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = visible ? "" : "none";
+            }
+        }
+
+        window.onload = populateTable;
+    </script>
+</body>
+</html>
