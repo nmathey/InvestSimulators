@@ -66,4 +66,5 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ---
 
 Développé avec ❤️ par NickFR
+
 ❤️ Vous souhaitez me soutenir c'est par là ---> https://investsimulators.mathey.fr/index.html#donation ❤️
